@@ -1,12 +1,27 @@
-FROM golang:1.22-alpine
+FROM golang: alpine as builder
+
+RUN mkdir /build
+
+ADD . /build/
+
+WORKDIR /build
+
+RUN go build -o main .
+
+#stage 2
+
+FROM alpine
+
+RUN adduser -S -D -H /app appuser
+
+USER appuser
+
+COPY. /app
+
+COPY --from-builder /build/main/app/
 
 WORKDIR /app
 
-COPY go.mod ./
-COPY . .
+EXPOSE 3000
 
-RUN go build -o /urlshortener .
-
-EXPOSE 8080
-
-CMD ["/urlshortener"]
+CMD ["./main"]
