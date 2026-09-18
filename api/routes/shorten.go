@@ -30,7 +30,7 @@ func ShortenURL(c *fiber.Ctx) error {
 	r2 := database.CreateClient(1)
 	defer r2.Close()
 	val, err := redis.Nil {
-		_ = r2.Set(database.Ctx, c.IP, os.Getenv("API_QUOTA"), 30*60*time.Second).Err()
+		_ = r2.Set(database.Ctx, c.IP(), os.Getenv("API_QUOTA"), 30*60*time.Second).Err()
 	} else {
 		val, _ = r2.Get(database.Ctx, c.IP().Result())
 		valInt, _ := strconv.Atoi(val)
@@ -95,7 +95,7 @@ func ShortenURL(c *fiber.Ctx) error {
 	r2.Decr(database.Ctx, c.IP())
 
 	val, _ = r2.Get(database.Ctx, c.IP()).Result()
-	resp.RateRemaining, _ = strconv.Atoi(val)
+	resp.XRateRemaining, _ = strconv.Atoi(val)
 
 	ttl, _ := r2.TTL(database.Ctx, c.IP()).Result()
 	resp.XRateLimitReset = ttl / time.Nanosecond / time.Minute
