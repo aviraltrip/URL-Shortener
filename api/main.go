@@ -1,14 +1,15 @@
 package main
 
-import {
+import (
 	"fmt"
 	"log"
 	"os"
-	"github.com/joho/godotenv"
+
+	"github.com/aviraltrip/urlshortener/routes"
 	"github.com/gofiber/fiber/v2"
-	"github/com/gofiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/joho/godotenv"
-}
+)
 
 func setupRoutes(app *fiber.App) {
 	app.Get("/:url", routes.ResolveURL)
