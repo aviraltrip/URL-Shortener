@@ -1,8 +1,8 @@
-FROM golang: alpine as builder
+FROM golang:alpine AS builder
 
 RUN mkdir /build
 
-ADD . /build/
+COPY . /build/
 
 WORKDIR /build
 
@@ -16,9 +16,9 @@ RUN adduser -S -D -H -h /app appuser
 
 USER appuser
 
-COPY. /app
+COPY . /app
 
-COPY --from-builder /build/main/app/
+COPY --from=builder /build/main /app/main
 
 WORKDIR /app
 
