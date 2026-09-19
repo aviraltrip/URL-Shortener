@@ -1,15 +1,43 @@
-version: "3"
-
 services:
   api:
     build: api
     ports:
       - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/urlshortener?sslmode=disable
+      - REDIS_ADDR=redis:6379
+      - APP_PORT=:3000
+      - DOMAIN=http://localhost:3000
+      - API_QUOTA=10
     depends_on:
-      - db
-  db:
-    build: db
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+
+  redis:
+    image: redis:alpine
     ports:
       - "6379:6379"
     volumes:
-      - ./.data:/data
+      - redis_data:/data
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=urlshortener
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d urlshortener"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  redis_data:
+  postgres_data:
