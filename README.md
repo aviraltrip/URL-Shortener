@@ -42,47 +42,64 @@ flowchart LR
 
 ```mermaid
 sequenceDiagram
+    autonumber
     participant C as Client
     participant A as Fiber API
     participant S as LinkService
     participant D as PostgreSQL
     participant R as Redis
 
-    C->>A: POST /api/v1 { url, short?, expiry? }
-    A->>S: Shorten(rawURL, customShort, expiry)
-    S->>S: Validate URL + alias
-    S->>D: INSERT link metadata
-    D-->>S: Link record
-    S->>R: Set cache entry for short code
-    S-->>A: Short URL response
-    A-->>C: 200 OK
+    C->>A: POST /api/v1 with original URL and optional alias
+    A->>S: Validate payload and normalize URL
+    S->>D: Check alias availability + URL rules
+    D-->>S: Validation result
+
+    alt Valid and unique
+        S->>D: Insert link metadata
+        D-->>S: Stored link record
+        S->>R: Cache short code -> original URL
+        S-->>A: New short URL response
+        A-->>C: 201 Created
+    else Invalid or duplicate
+        S-->>A: Validation error
+        A-->>C: 400 Bad Request
+    end
 ```
 
 ### 2. Resolve short URL
 
 ```mermaid
 sequenceDiagram
+    autonumber
     participant C as Client
     participant A as Fiber API
     participant S as LinkService
     participant R as Redis
     participant D as PostgreSQL
 
-    C->>A: GET /:short_code
-    A->>S: Resolve(code)
-    S->>R: Check cache
-    alt cache hit
-        R-->>S: original URL
-        S-->>A: redirect target
-        S->>D: Increment click count asynchronously
-    else cache miss
-        S->>D: Query link by short code
-        D-->>S: original URL
-        S->>R: Write cache entry
-        S-->>A: redirect target
-        S->>D: Increment click count asynchronously
+    C->>A: GET /{short_code}
+    A->>S: Resolve short code
+    S->>R: Check Redis cache
+
+    alt Cache hit
+        R-->>S: Original URL
+        S-->>A: Redirect target
+        A-->>C: 307 Temporary Redirect
+        S->>D: Record click asynchronously
+    else Cache miss
+        S->>D: Look up code in PostgreSQL
+        D-->>S: Original URL + expiry metadata
+
+        alt Link exists and is valid
+            S->>R: Store redirect in cache
+            S-->>A: Redirect target
+            A-->>C: 307 Temporary Redirect
+            S->>D: Record click asynchronously
+        else Link missing or expired
+            S-->>A: Not found / expired response
+            A-->>C: 404 Not Found
+        end
     end
-    A-->>C: 307 Temporary Redirect
 ```
 
 ## Core Responsibilities
