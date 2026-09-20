@@ -4,11 +4,12 @@ A lightweight, production-oriented URL shortener built with Go, Fiber, PostgreSQ
 
 ## Tech Stack
 
-- Go 1.x
-- Fiber web framework
-- PostgreSQL via `pgxpool`
+- Go 1.27.0
+- Fiber v2.52.15
+- PostgreSQL via `pgx/v5` and `pgxpool`
 - SQL code generation via `sqlc`
-- Redis for caching and IP-based rate limiting
+- Redis via `go-redis/redis/v8`
+- UUID generation via `google/uuid`
 - Docker Compose for local orchestration
 - Database migrations for schema versioning
 
